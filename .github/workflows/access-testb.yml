@@ -1,0 +1,38 @@
+name: TestA -> TestB Access
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+
+jobs:
+  access-testb:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout testA
+        uses: actions/checkout@v4
+
+      - name: Add github.com to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+      - name: Checkout testB (private repo via deploy key)
+        uses: actions/checkout@v4
+        with:
+          repository: AlkardCom/testB
+          ref: main
+          path: testB
+          ssh-key: ${{ secrets.TESTB_DEPLOY_KEY }}
+          fetch-depth: 1
+
+      - name: List files from testB
+        run: |
+          echo "testB contents:"
+          ls -la testB
+
+      - name: Verify access by reading index.html
+        run: |
+          grep -n "HELLO_FROM_testB" testB/index.html
+          echo "✅ testA successfully accessed testB"
