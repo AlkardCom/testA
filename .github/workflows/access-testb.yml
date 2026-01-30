@@ -6,19 +6,24 @@ on:
       reason:
         description: 'Why are you running this workflow?'
         required: false
-        default: 'manual test'
+        default: 'manual run'
   push:
     branches:
-      - main
+      - '**'   # push event gelsin, ama job koşul ile kontrol edilecek
 
 jobs:
   access-testb:
     runs-on: ubuntu-24.04
 
+    # 👇 ANA MANTIK BURASI
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.ref_name == 'main'
+
     steps:
       - name: Echo trigger info
         run: |
-          echo "Event: $GITHUB_EVENT_NAME"
+          echo "Event:  $GITHUB_EVENT_NAME"
           echo "Branch: $GITHUB_REF_NAME"
           echo "Reason: ${{ inputs.reason }}"
 
