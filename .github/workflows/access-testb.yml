@@ -2,14 +2,26 @@ name: TestA -> TestB Access
 
 on:
   workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Why are you running this workflow?'
+        required: false
+        default: 'manual test'
   push:
-    branches: ["main"]
+    branches:
+      - main
 
 jobs:
   access-testb:
     runs-on: ubuntu-24.04
 
     steps:
+      - name: Echo trigger info
+        run: |
+          echo "Event: $GITHUB_EVENT_NAME"
+          echo "Branch: $GITHUB_REF_NAME"
+          echo "Reason: ${{ inputs.reason }}"
+
       - name: Checkout testA
         uses: actions/checkout@v4
 
