@@ -1,0 +1,43 @@
+# CodeRabbit Configuration
+# Place in repository root as: .coderabbit.yaml
+
+reviews:
+  profile: balanced   # strict | balanced | chill
+  auto_review: true
+  auto_review_on_push: true
+
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+
+  collapse_walkthrough: false
+
+  path_filters:
+    - include:
+        - "**/*.js"
+        - "**/*.ts"
+        - "**/*.tsx"
+        - "**/*.html"
+        - "**/*.css"
+        - "**/*.json"
+    - exclude:
+        - "node_modules/**"
+        - "dist/**"
+        - "build/**"
+        - ".next/**"
+
+analysis:
+  security: true
+  performance: true
+  best_practices: true
+  complexity: true
+  duplication: true
+
+comments:
+  inline: true
+  summary: true
+
+ignore:
+  - "*.md"
+  - "public/**"
+  - "*.lock"
