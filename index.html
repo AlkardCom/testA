@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Mini Task Board (Review Playground)</title>
+    <style>
+      :root {
+        --bg: #0b0f17;
+        --panel: #111827;
+        --panel2: #0f172a;
+        --text: #e5e7eb;
+        --muted: #94a3b8;
+        --border: rgba(148, 163, 184, 0.25);
+        --good: #22c55e;
+        --warn: #f59e0b;
+        --bad: #ef4444;
+        --focus: #60a5fa;
+        --shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+        --radius: 14px;
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f6f7fb;
+          --panel: #ffffff;
+          --panel2: #ffffff;
+          --text: #0f172a;
+          --muted: #475569;
+          --border: rgba(15, 23, 42, 0.15);
+          --shadow: 0 12px 30px rgba(2, 6, 23, 0.12);
+          --focus: #2563eb;
+        }
+      }
+
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+        background: radial-gradient(900px 600px at 15% 0%, rgba(96,165,250,.22), transparent 60%),
+                    radial-gradient(900px 600px at 85% 0%, rgba(34,197,94,.18), transparent 60%),
+                    var(--bg);
+        color: var(--text);
+      }
+
+      a { color: inherit; }
+      .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 18px 60px; }
+
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: 0.2px;
+      }
+
+      .sub {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(255,255,255,0.03);
+        box-shadow: var(--shadow);
+        user-select: none;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .pill b { color: var(--text); }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 18px;
+        margin-top: 16px;
+      }
+
+      @media (max-width: 900px) {
+        .grid { grid-template-columns: 1fr; }
+        header { flex-direction: column; align-items: stretch; }
+      }
+
+      .card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .card .hd {
+        padding: 14px 14px 10px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .card .bd { padding: 14px; }
+
+      .row { display: grid; grid-template-columns: 1fr 180px; gap: 10px; }
+      @media (max-width: 520px) { .row { grid-template-columns: 1fr; } }
+
+      label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+      input, select, textarea {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+        background: rgba(255,255,255,0.04);
+        color: var(--text);
+        outline: none;
+      }
+      textarea { min-height: 92px; resize: vertical; }
+
+      input:focus, select:focus, textarea:focus, button:focus {
+        box-shadow: 0 0 0 3px rgba(96,165,250,.25);
+        border-color: rgba(96,165,250,.7);
+      }
+
+      .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
+      button {
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,0.06);
+        color: var(--text);
+        padding: 10px 12px;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+      button.primary { border-color: rgba(34,197,94,.5); background: rgba(34,197,94,.12); }
+      button.danger { border-color: rgba(239,68,68,.5); background: rgba(239,68,68,.12); }
+
+      .hint { color: var(--muted); font-size: 12px; }
+
+      .toolbar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .toolbar input[type="search"] { max-width: 320px; }
+      .sr { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+      .list { display: grid; gap: 10px; margin-top: 12px; }
+      .item {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px;
+        background: rgba(255,255,255,0.03);
+      }
+      .item-top { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+      .item-title { margin: 0; font-size: 14px; }
+      .meta { font-size: 12px; color: var(--muted); margin-top: 6px; display:flex; gap:10px; flex-wrap:wrap; }
+      .badge { font-size: 11px; border: 1px solid var(--border); padding: 2px 8px; border-radius: 999px; color: var(--muted); }
+      .badge.good { border-color: rgba(34,197,94,.45); color: var(--good); }
+      .badge.warn { border-color: rgba(245,158,11,.45); color: var(--warn); }
+      .badge.bad  { border-color: rgba(239,68,68,.45); color: var(--bad); }
+
+      .small-actions { display:flex; gap:8px; flex-wrap:wrap; }
+      .small-actions button { padding: 8px 10px; border-radius: 10px; font-size: 12px; }
+
+      .empty { padding: 18px; border: 1px dashed var(--border); border-radius: 14px; color: var(--muted); }
+
+      footer { margin-top: 16px; color: var(--muted); font-size: 12px; }
+      code { padding: 2px 6px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <header>
+        <div>
+          <h1>Mini Task Board</h1>
+          <div class="sub">
+            Tek dosya HTML + JS. PR açınca CodeRabbit’in yorumlayabileceği:
+            form validation, state, localStorage, a11y ve küçük edge-case’ler içerir.
+          </div>
+        </div>
+        <div class="pill" aria-label="Uygulama bilgisi">
+          <span>Storage:</span> <b id="storageState">—</b>
+          <span aria-hidden="true">•</span>
+          <span>Items:</span> <b id="countState">0</b>
+        </div>
+      </header>
+
+      <div class="grid">
+        <!-- Left: board -->
+        <section class="card" aria-labelledby="board-title">
+          <div class="hd">
+            <div class="toolbar">
+              <h2 id="board-title" style="margin:0;font-size:16px;">Tasks</h2>
+              <span class="hint">Filtre / sırala / ara</span>
+              <span style="flex:1"></span>
+
+              <label class="sr" for="search">Ara</label>
+              <input id="search" type="search" placeholder="Başlık veya açıklama ara…" />
+
+              <label class="sr" for="statusFilter">Status</label>
+              <select id="statusFilter" aria-label="Status filter">
+                <option value="all">Hepsi</option>
+                <option value="todo">Todo</option>
+                <option value="doing">Doing</option>
+                <option value="done">Done</option>
+              </select>
+
+              <label class="sr" for="sortBy">Sırala</label>
+              <select id="sortBy" aria-label="Sort by">
+                <option value="created_desc">En yeni</option>
+                <option value="created_asc">En eski</option>
+                <option value="priority_desc">Öncelik (yüksek→düşük)</option>
+                <option value="priority_asc">Öncelik (düşük→yüksek)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="bd">
+            <div id="list" class="list" aria-live="polite" aria-busy="false"></div>
+            <div id="empty" class="empty" hidden>
+              Henüz task yok. Sağdan bir task ekle.
+            </div>
+
+            <footer>
+              Kısayollar: <code>/</code> aramaya odaklan • <code>Ctrl/Cmd + Enter</code> task ekle
+            </footer>
+          </div>
+        </section>
+
+        <!-- Right: create form -->
+        <aside class="card" aria-labelledby="create-title">
+          <div class="hd">
+            <h2 id="create-title" style="margin:0;font-size:16px;">Yeni Task</h2>
+            <div class="sub" style="margin-top:6px;">
+              Basit ama review edilebilir: validation, XSS kaçınma, state güncelleme, storage, vb.
+            </div>
+          </div>
+
+          <div class="bd">
+            <form id="form" novalidate>
+              <div class="row">
+                <div>
+                  <label for="title">Başlık</label>
+                  <input id="title" name="title" maxlength="80" required placeholder="Örn: PR review feedbacklerini uygula" />
+                  <div id="titleErr" class="hint" role="alert" aria-live="polite" style="margin-top:6px;"></div>
+                </div>
+
+                <div>
+                  <label for="priority">Öncelik</label>
+                  <select id="priority" name="priority">
+                    <option value="3">Yüksek</option>
+                    <option value="2" selected>Orta</option>
+                    <option value="1">Düşük</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="margin-top:10px;">
+                <label for="desc">Açıklama</label>
+                <textarea id="desc" name="desc" maxlength="500" placeholder="Task detayını yaz…"></textarea>
+                <div class="hint" id="descCount" style="margin-top:6px;">0 / 500</div>
+              </div>
+
+              <div class="row" style="margin-top:10px;">
+                <div>
+                  <label for="status">Status</label>
+                  <select id="status" name="status">
+                    <option value="todo" selected>Todo</option>
+                    <option value="doing">Doing</option>
+                    <option value="done">Done</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label for="due">Bitiş Tarihi</label>
+                  <input id="due" name="due" type="date" />
+                  <div class="hint" id="dueHint" style="margin-top:6px;">Opsiyonel</div>
+                </div>
+              </div>
+
+              <div class="actions">
+                <button class="primary" type="submit">Ekle</button>
+                <button type="button" id="seedBtn">Demo Doldur</button>
+                <button class="danger" type="button" id="clearBtn">Tümünü Sil</button>
+                <span class="hint" id="formHint"></span>
+              </div>
+            </form>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <script>
+      /**
+       * Intentionally "reviewable" vanilla JS:
+       * - localStorage persistence
+       * - input validation + UX
+       * - filter/search/sort
+       * - a11y (aria-live updates, keyboard shortcuts)
+       */
+
+      const STORAGE_KEY = "mini-task-board:v1";
+
+      /** @typedef {"todo"|"doing"|"done"} Status */
+      /** @typedef {1|2|3} Priority */
+
+      /** @typedef Task
+       *  @property {string} id
+       *  @property {string} title
+       *  @property {string} desc
+       *  @property {Status} status
+       *  @property {Priority} priority
+       *  @property {string|null} dueISO
+       *  @property {number} createdAt
+       */
+
+      const el = {
+        list: document.getElementById("list"),
+        empty: document.getElementById("empty"),
+        storageState: document.getElementById("storageState"),
+        countState: document.getElementById("countState"),
+
+        search: document.getElementById("search"),
+        statusFilter: document.getElementById("statusFilter"),
+        sortBy: document.getElementById("sortBy"),
+
+        form: document.getElementById("form"),
+        title: document.getElementById("title"),
+        titleErr: document.getElementById("titleErr"),
+        desc: document.getElementById("desc"),
+        descCount: document.getElementById("descCount"),
+        priority: document.getElementById("priority"),
+        status: document.getElementById("status"),
+        due: document.getElementById("due"),
+        dueHint: document.getElementById("dueHint"),
+        formHint: document.getElementById("formHint"),
+        seedBtn: document.getElementById("seedBtn"),
+        clearBtn: document.getElementById("clearBtn"),
+      };
+
+      /** @type {Task[]} */
+      let tasks = [];
+
+      function safeText(str) {
+        // Simple escaping to avoid injecting HTML into the list.
+        // (Review target: could suggest a more robust approach.)
+        return String(str)
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function formatDate(iso) {
+        if (!iso) return "—";
+        try {
+          const d = new Date(iso);
+          return new Intl.DateTimeFormat("tr-TR", { year: "numeric", month: "short", day: "2-digit" }).format(d);
+        } catch {
+          return iso;
+        }
+      }
+
+      function priorityLabel(p) {
+        if (p === 3) return { text: "Yüksek", cls: "bad" };
+        if (p === 2) return { text: "Orta", cls: "warn" };
+        return { text: "Düşük", cls: "good" };
+      }
+
+      function statusLabel(s) {
+        if (s === "done") return { text: "Done", cls: "good" };
+        if (s === "doing") return { text: "Doing", cls: "warn" };
+        return { text: "Todo", cls: "bad" };
+      }
+
+      function load() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) {
+            el.storageState.textContent = "empty";
+            tasks = [];
+            return;
+          }
+          const parsed = JSON.parse(raw);
+          if (!Array.isArray(parsed)) throw new Error("Bad data shape");
+          tasks = parsed;
+          el.storageState.textContent = "loaded";
+        } catch (e) {
+          // If storage is corrupted, we still want UI to be usable.
+          el.storageState.textContent = "corrupt";
+          tasks = [];
+          console.warn("Failed to load tasks:", e);
+        }
+      }
+
+      function save() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+          el.storageState.textContent = "saved";
+        } catch (e) {
+          el.storageState.textContent = "failed";
+          console.warn("Failed to save:", e);
+        }
+      }
+
+      function setBusy(b) {
+        el.list.setAttribute("aria-busy", b ? "true" : "false");
+      }
+
+      function render() {
+        const q = el.search.value.trim().toLowerCase();
+        const filter = el.statusFilter.value;
+        const sort = el.sortBy.value;
+
+        /** @type {Task[]} */
+        let view = tasks.slice();
+
+        // filter
+        if (filter !== "all") {
+          view = view.filter((t) => t.status === filter);
+        }
+
+        // search
+        if (q) {
+          view = view.filter((t) => (t.title + " " + t.desc).toLowerCase().includes(q));
+        }
+
+        // sort
+        view.sort((a, b) => {
+          if (sort === "created_desc") return b.createdAt - a.createdAt;
+          if (sort === "created_asc") return a.createdAt - b.createdAt;
+          if (sort === "priority_desc") return b.priority - a.priority;
+          if (sort === "priority_asc") return a.priority - b.priority;
+          return 0;
+        });
+
+        el.countState.textContent = String(view.length);
+
+        if (view.length === 0) {
+          el.empty.hidden = false;
+          el.list.innerHTML = "";
+          return;
+        }
+        el.empty.hidden = true;
+
+        el.list.innerHTML = view
+          .map((t) => {
+            const p = priorityLabel(t.priority);
+            const s = statusLabel(t.status);
+            return `
+              <article class="item" data-id="${safeText(t.id)}">
+                <div class="item-top">
+                  <h3 class="item-title">${safeText(t.title)}</h3>
+                  <div class="small-actions">
+                    <button type="button" data-action="toggle" aria-label="Toggle status">Durum</button>
+                    <button type="button" data-action="delete" class="danger" aria-label="Delete task">Sil</button>
+                  </div>
+                </div>
+
+                <div class="meta">
+                  <span class="badge ${p.cls}">Öncelik: ${p.text}</span>
+                  <span class="badge ${s.cls}">Status: ${s.text}</span>
+                  <span class="badge">Due: ${safeText(formatDate(t.dueISO))}</span>
+                  <span class="badge">Created: ${safeText(formatDate(new Date(t.createdAt).toISOString()))}</span>
+                </div>
+
+                ${
+                  t.desc
+                    ? `<p style="margin:10px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45;">
+                         ${safeText(t.desc)}
+                       </p>`
+                    : ""
+                }
+              </article>
+            `;
+          })
+          .join("");
+      }
+
+      function validateTitle(title) {
+        const t = String(title || "").trim();
+
+        // Review target: Could be improved with more nuanced rules and better UX.
+        if (t.length === 0) return "Başlık boş olamaz.";
+        if (t.length < 4) return "Başlık en az 4 karakter olmalı.";
+        if (t.length > 80) return "Başlık en fazla 80 karakter olmalı.";
+        return null;
+      }
+
+      function newId() {
+        // Simple id (review target: collision + crypto randomness).
+        return "t_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+      }
+
+      function addTask(payload) {
+        /** @type {Task} */
+        const t = {
+          id: newId(),
+          title: String(payload.title).trim(),
+          desc: String(payload.desc || "").trim(),
+          status: /** @type {Status} */ (payload.status || "todo"),
+          priority: /** @type {Priority} */ (Number(payload.priority) || 2),
+          dueISO: payload.dueISO || null,
+          createdAt: Date.now(),
+        };
+        tasks.unshift(t);
+        save();
+        render();
+      }
+
+      function toggleStatus(taskId) {
+        const i = tasks.findIndex((t) => t.id === taskId);
+        if (i === -1) return;
+
+        const cur = tasks[i].status;
+        tasks[i].status = cur === "todo" ? "doing" : cur === "doing" ? "done" : "todo";
+
+        save();
+        render();
+      }
+
+      function deleteTask(taskId) {
+        tasks = tasks.filter((t) => t.id !== taskId);
+        save();
+        render();
+      }
+
+      function clearAll() {
+        if (!confirm("Tüm taskleri silmek istediğine emin misin?")) return;
+        tasks = [];
+        save();
+        render();
+      }
+
+      function seed() {
+        const demo = [
+          { title: "A11y: aria-live bölgesini iyileştir", desc: "Screen reader için mesajlar ekle.", status: "todo", priority: 3 },
+          { title: "Sort/Filter edge-case test", desc: "Boş arama, unicode, tarih parse.", status: "doing", priority: 2 },
+          { title: "LocalStorage error handling", desc: "Quota dolunca graceful fallback.", status: "done", priority: 1 },
+        ];
+
+        demo.forEach((d) =>
+          addTask({
+            title: d.title,
+            desc: d.desc,
+            status: d.status,
+            priority: d.priority,
+            dueISO: null,
+          })
+        );
+      }
+
+      // Event bindings
+      el.form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        el.formHint.textContent = "";
+
+        const title = el.title.value;
+        const err = validateTitle(title);
+        el.titleErr.textContent = err || "";
+        el.title.setAttribute("aria-invalid", err ? "true" : "false");
+        if (err) {
+          el.title.focus();
+          return;
+        }
+
+        const dueVal = el.due.value ? new Date(el.due.value).toISOString() : null;
+
+        setBusy(true);
+        // Simulate async work (review target: cancelation, debounce, etc.)
+        setTimeout(() => {
+          addTask({
+            title,
+            desc: el.desc.value,
+            status: el.status.value,
+            priority: Number(el.priority.value),
+            dueISO: dueVal,
+          });
+
+          el.form.reset();
+          el.descCount.textContent = "0 / 500";
+          el.titleErr.textContent = "";
+          el.title.setAttribute("aria-invalid", "false");
+          el.formHint.textContent = "Eklendi ✓";
+          setBusy(false);
+        }, 120);
+      });
+
+      el.desc.addEventListener("input", () => {
+        el.descCount.textContent = `${el.desc.value.length} / 500`;
+      });
+
+      el.search.addEventListener("input", () => render());
+      el.statusFilter.addEventListener("change", () => render());
+      el.sortBy.addEventListener("change", () => render());
+
+      el.list.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-action]");
+        if (!btn) return;
+        const item = e.target.closest(".item");
+        if (!item) return;
+
+        const id = item.getAttribute("data-id");
+        const action = btn.getAttribute("data-action");
+
+        if (action === "toggle") toggleStatus(id);
+        if (action === "delete") deleteTask(id);
+      });
+
+      el.seedBtn.addEventListener("click", () => seed());
+      el.clearBtn.addEventListener("click", () => clearAll());
+
+      // Keyboard shortcuts
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "/" && document.activeElement !== el.search) {
+          e.preventDefault();
+          el.search.focus();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+          // submit form quickly
+          el.form.requestSubmit();
+        }
+      });
+
+      // Init
+      load();
+      render();
+    </script>
+  </body>
+</html>
